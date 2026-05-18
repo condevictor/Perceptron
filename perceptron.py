@@ -28,7 +28,7 @@ def perceptron_pla(x, y, max_epocas=1000, semente=None):
     for epoca in range(max_epocas):
         erros = 0
         for i in range(linhas):
-            if np.sign(np.dot(linhas[i], w)) != y[i]:
+            if np.sign(np.dot(x[i], w)) != y[i]:
                 w = w + (y[i] * x[i])
                 erros += 1
         if erros == 0:
