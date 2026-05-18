@@ -47,20 +47,33 @@ def plotar_fronteira(X_train, y_train, X_test, y_test, pesos):
     pca = PCA(n_components=2)
     X_train_sem_bias = X_train[:, 1:]
     X_test_sem_bias = X_test[:, 1:]
+    # Fit PCA apenas nos treino
     X_train_2d = pca.fit_transform(X_train_sem_bias)
     X_test_2d = pca.transform(X_test_sem_bias)
 
+    # Extrair média e componentes
+    media = pca.mean_   # vetor média das features (sem bias)
+    componentes = pca.components_   # shape (2, n_features)
+
     w0 = pesos[0]
     w_feat = pesos[1:]
-    w_2d = pca.components_ @ w_feat
 
+    # Termo de bias ajustado: w0' = w0 + w_feat · media
+    w0_ajustado = w0 + np.dot(w_feat, media)
+
+    # Coeficientes angulares no espaço PCA
+    w_pca = componentes @ w_feat   # shape (2,)
+
+    # Agora a reta no espaço PCA: w0_ajustado + w_pca[0]*z1 + w_pca[1]*z2 = 0
     z1_vals = np.linspace(X_train_2d[:, 0].min(), X_train_2d[:, 0].max(), 100)
-    if abs(w_2d[1]) > 1e-6:
-        z2_vals = -(w0 + w_2d[0] * z1_vals) / w_2d[1]
+    if abs(w_pca[1]) > 1e-6:
+        z2_vals = -(w0_ajustado + w_pca[0] * z1_vals) / w_pca[1]
     else:
-        z1_vals = np.full(100, -w0 / w_2d[0])
+        # Reta vertical
+        z1_vals = np.full(100, -w0_ajustado / w_pca[0])
         z2_vals = np.linspace(X_train_2d[:, 1].min(), X_train_2d[:, 1].max(), 100)
 
+    # Plot (igual ao seu, apenas com a reta corrigida)
     plt.figure(figsize=(8, 6))
     plt.scatter(X_train_2d[y_train==1, 0], X_train_2d[y_train==1, 1], c='blue', marker='o', alpha=0.6, label='Treino +1')
     plt.scatter(X_train_2d[y_train==-1, 0], X_train_2d[y_train==-1, 1], c='red', marker='x', alpha=0.6, label='Treino -1')
@@ -82,9 +95,17 @@ if __name__ == "__main__":
     x_train, y_train = preprocessar(x_train, y_train, class_pos = 1, class_neg = 5)
     x_test, y_test = preprocessar(x_test, y_test, class_pos = 1, class_neg = 5)
 
-    w = perceptron_pla(x_train, y_train, max_epocas=5000, semente=87)
+    w = perceptron_pla(x_train, y_train, max_epocas=1, semente=87)
 
     pred_train = np.sign(np.dot(x_train, w))
     pred_test  = np.sign(np.dot(x_test, w))
-    print(f"Erro dentro da amostra: {erro(y_train, pred_train):.4f}")
-    print(f"Erro fora da amostra:    {erro(y_test, pred_test):.4f}")
+    
+    erro_train = erro(y_train, pred_train)
+    erro_test = erro(y_test, pred_test)
+    ac_train = 1 - erro_train
+    ac_test = 1 - erro_test
+    
+    print(f"Erro dentro da amostra: {erro_train:.4f}  |  Acurácia: {ac_train:.4f}")
+    print(f"Erro fora da amostra:    {erro_test:.4f}  |  Acurácia: {ac_test:.4f}")
+
+    plotar_fronteira(x_train, y_train, x_test, y_test, w)
