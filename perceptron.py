@@ -95,7 +95,7 @@ if __name__ == "__main__":
     x_train, y_train = preprocessar(x_train, y_train, class_pos = 1, class_neg = 5)
     x_test, y_test = preprocessar(x_test, y_test, class_pos = 1, class_neg = 5)
 
-    w = perceptron_pla(x_train, y_train, max_epocas=1, semente=87)
+    w = perceptron_pla(x_train, y_train, max_epocas=1000, semente=10)
 
     pred_train = np.sign(np.dot(x_train, w))
     pred_test  = np.sign(np.dot(x_test, w))
